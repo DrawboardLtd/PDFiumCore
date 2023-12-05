@@ -55,6 +55,7 @@ stages:
       name: 'Default'
       vmImage: 'windows-latest'
     steps:
+    - checkout: none
     - task: DownloadBuildArtifacts@1
       inputs:
         buildType: current
