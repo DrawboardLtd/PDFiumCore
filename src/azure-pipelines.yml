@@ -1,8 +1,10 @@
 variables: 
 - name: NUGET_ARTIFACTS
   value: 'dbpdfium-nuget-artifacts'
-- name: PACKAGE_NAME
-  value: 'Drawboard.PDFium.UWP'
+- name: PACKAGE_DIR
+  value: 'Drawboard.PDFiumCore'
+- name: PACKAGE_ID
+  value: 'Drawboard.PDFiumCore.UWP'
 
 stages:
 - stage: Build
@@ -35,13 +37,13 @@ stages:
           script: |
             dotnet build src/PDFiumCoreBindingsGenerator/PDFiumCoreBindingsGenerator.csproj -c Release
             dotnet ./src/PDFiumCoreBindingsGenerator/bin/Release/net6.0/PDFiumCoreBindingsGenerator.dll latest true
-            dotnet pack ./src/PDFiumCore/PDFiumCore.csproj -c Release --output $(Build.SourcesDirectory)/bin/$(PACKAGE_NAME)
-            dotnet test ./src/PDFiumCore.Tests/PDFiumCore.Tests.csproj
+            dotnet pack ./src/PDFiumCore/PDFiumCore.csproj -c Release --output $(Build.SourcesDirectory)/bin/$(PACKAGE_DIR) -p:PackageID=$(PACKAGE_ID) -p:PackageProjectUrl='https://github.com/DrawboardLtd/PDFiumCore' -p:RepositoryUrl='https://github.com/DrawboardLtd/PDFiumCore'
+            # dotnet test ./src/PDFiumCore.Tests/PDFiumCore.Tests.csproj
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish artifacts'
         inputs:
-          PathtoPublish: '$(Build.SourcesDirectory)/bin/$(PACKAGE_NAME)'
+          PathtoPublish: '$(Build.SourcesDirectory)/bin/$(PACKAGE_DIR)'
           ArtifactName: $(NUGET_ARTIFACTS)
 
 - stage: PublishNugetOnAzureDevops 
@@ -62,9 +64,9 @@ stages:
     - script: |
         dir $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)
         
-        mkdir $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
+        mkdir $(Build.SourcesDirectory)\bin\$(PACKAGE_DIR)
 
-        copy $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\$(PACKAGE_NAME)*.nupkg $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
+        copy $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\$(PACKAGE_DIR)*.nupkg $(Build.SourcesDirectory)\bin\$(PACKAGE_DIR)
       displayName: List downloaded nuget artifacts & copy package to bin folder
       
     - task: NuGetCommand@2
@@ -73,4 +75,4 @@ stages:
         command: push
         nuGetFeedType: internal
         feedPublish: Drawboard.PDF.SDK
-        packagesToPush: '$(Build.SourcesDirectory)/bin/$(PACKAGE_NAME)/*.nupkg'
+        packagesToPush: '$(Build.SourcesDirectory)/bin/$(PACKAGE_DIR)/*.nupkg'
