@@ -65,7 +65,11 @@ stages:
     - script: |
         dir $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)
       displayName: List downloaded nuget artifacts
-      
+
+    - task: NuGetToolInstaller@1
+      inputs:
+        versionSpec: '6.x'
+
     - task: NuGetCommand@2
       displayName: 'NuGet publish'
       inputs:
