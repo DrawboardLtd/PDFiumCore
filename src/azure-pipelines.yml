@@ -63,11 +63,7 @@ stages:
 
     - script: |
         dir $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)
-        
-        mkdir $(Build.SourcesDirectory)\bin\$(PACKAGE_DIR)
-
-        copy $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\$(PACKAGE_DIR)*.nupkg $(Build.SourcesDirectory)\bin\$(PACKAGE_DIR)
-      displayName: List downloaded nuget artifacts & copy package to bin folder
+      displayName: List downloaded nuget artifacts
       
     - task: NuGetCommand@2
       displayName: 'NuGet publish'
@@ -75,4 +71,4 @@ stages:
         command: push
         nuGetFeedType: internal
         feedPublish: Drawboard.PDF.SDK
-        packagesToPush: '$(Build.SourcesDirectory)/bin/$(PACKAGE_DIR)/*.nupkg'
+        packagesToPush: '$(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\*.nupkg'
