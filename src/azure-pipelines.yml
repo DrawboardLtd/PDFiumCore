@@ -1,13 +1,73 @@
+variables: 
+- name: NUGET_ARTIFACTS
+  value: 'dbpdfium-nuget-artifacts'
+- name: PACKAGE_NAME
+  value: 'Drawboard.PDFium.UWP'
+
 stages:
 - stage: Build
   jobs:
    - job: BuildAndPack
      displayName: 'Build and Pack'
+     pool:
+      name: 'Default'
+      vmImage: 'windows-latest'
      steps:
       - checkout: self
         submodules: 'true'
+
+      - task: UseDotNet@2
+        inputs:
+          packageType: 'sdk'
+          version: '6.x'
+
+      - task: NuGetToolInstaller@1
+        inputs:
+          versionSpec: '6.x'
+
+      - task: NuGetAuthenticate@1
+        displayName: 'Authenticate DevOpsNuget repository'
+        # don't need other inputs because the nuget feed is in the Drawboard organization
+
       - task: PowerShell@2
         inputs:
           targetType: 'inline'
           script: |
-            ./build_test_publish.ps1
+            dotnet build src/PDFiumCoreBindingsGenerator/PDFiumCoreBindingsGenerator.csproj -c Release
+            dotnet ./src/PDFiumCoreBindingsGenerator/bin/Release/net6.0/PDFiumCoreBindingsGenerator.dll latest true
+            dotnet pack ./src/PDFiumCore/PDFiumCore.csproj -c Release --output $(Build.SourcesDirectory)/bin/$(PACKAGE_NAME)
+            dotnet test ./src/PDFiumCore.Tests/PDFiumCore.Tests.csproj
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish artifacts'
+        inputs:
+          PathtoPublish: '$(Build.SourcesDirectory)/bin/$(PACKAGE_NAME)'
+          ArtifactName: $(NUGET_ARTIFACTS)
+
+- stage: PublishNugetOnAzureDevops 
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  dependsOn: Build
+  jobs:  
+  - job: PublishNugetJob
+    pool:
+      name: 'Default'
+      vmImage: 'windows-latest'
+    steps:
+    - download: current
+      artifact: $(NUGET_ARTIFACTS)
+
+    - script: |
+        dir $(Pipeline.Workspace)\$(NUGET_ARTIFACTS)
+        
+        mkdir $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
+
+        copy $(Pipeline.Workspace)\$(NUGET_ARTIFACTS)\$(PACKAGE_NAME).*.nupkg $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
+      displayName: List downloaded nuget artifacts & copy package to bin folder
+      
+    - task: NuGetCommand@2
+      displayName: 'NuGet publish'
+      inputs:
+        command: push
+        nuGetFeedType: internal
+        feedPublish: Drawboard.PDF.SDK
+        packagesToPush: '$(Build.SourcesDirectory)/bin/$(PACKAGE_NAME)/*.nupkg'
