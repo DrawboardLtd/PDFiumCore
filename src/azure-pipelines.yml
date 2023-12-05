@@ -2,9 +2,9 @@ variables:
 - name: NUGET_ARTIFACTS
   value: 'dbpdfium-nuget-artifacts'
 - name: PACKAGE_DIR
-  value: 'Drawboard.PDFiumCore'
+  value: 'Drawboard.PDFium'
 - name: PACKAGE_ID
-  value: 'Drawboard.PDFiumCore.UWP'
+  value: 'Drawboard.PDFium.UWP'
 
 stages:
 - stage: Build
@@ -75,5 +75,5 @@ stages:
       inputs:
         command: push
         nuGetFeedType: internal
-        feedPublish: Drawboard.PDF.SDK
+        feedPublish: Drawboard.PDFium.UWP
         packagesToPush: '$(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\*.nupkg'
