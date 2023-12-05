@@ -47,7 +47,7 @@ stages:
           ArtifactName: $(NUGET_ARTIFACTS)
 
 - stage: PublishNugetOnAzureDevops 
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
   dependsOn: Build
   jobs:  
   - job: PublishNugetJob
@@ -70,6 +70,10 @@ stages:
       inputs:
         versionSpec: '6.x'
 
+    - task: NuGetAuthenticate@1
+      displayName: 'Authenticate DevOpsNuget repository'
+      # don't need other inputs because the nuget feed is in the Drawboard organization
+
     - task: NuGetCommand@2
       displayName: 'NuGet publish'
       inputs:
@@ -77,3 +81,4 @@ stages:
         nuGetFeedType: internal
         feedPublish: Drawboard.PDFium.UWP
         packagesToPush: '$(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\*.nupkg'
+        allowPackageConflicts: true
