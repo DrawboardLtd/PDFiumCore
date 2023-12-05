@@ -53,15 +53,18 @@ stages:
       name: 'Default'
       vmImage: 'windows-latest'
     steps:
-    - download: current
-      artifact: $(NUGET_ARTIFACTS)
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: current
+        artifactName: $(NUGET_ARTIFACTS)
+        downloadPath: '$(System.ArtifactsDirectory)'
 
     - script: |
-        dir $(Pipeline.Workspace)\$(NUGET_ARTIFACTS)
+        dir $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)
         
         mkdir $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
 
-        copy $(Pipeline.Workspace)\$(NUGET_ARTIFACTS)\$(PACKAGE_NAME).*.nupkg $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
+        copy $(System.ArtifactsDirectory)\$(NUGET_ARTIFACTS)\$(PACKAGE_NAME)*.nupkg $(Build.SourcesDirectory)\bin\$(PACKAGE_NAME)
       displayName: List downloaded nuget artifacts & copy package to bin folder
       
     - task: NuGetCommand@2
